@@ -1,15 +1,17 @@
 package com.allumez.offlinedatabase;
 
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,9 +20,11 @@ import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
+import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -67,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        registerReceiver(new NetworkStateChecker(), new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
         //initializing views and objects
         db = new DatabaseHelper(this);
         names = new ArrayList<>();
@@ -94,16 +98,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         //registering the broadcast receiver to update sync status
         registerReceiver(broadcastReceiver, new IntentFilter(DATA_SAVED_BROADCAST));
-        registerReceiver(new NetworkStateChecker(), new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
     }
-    @Override
-    protected void onStop()
-    {
-        unregisterReceiver(broadcastReceiver);
-        super.onStop();
-    }
-
-
 
     /*
      * this method will
@@ -143,25 +138,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         progressDialog.show();
 
         final String name = editTextName.getText().toString().trim();
-        Log.e("name",name);
+
         StringRequest stringRequest = new StringRequest(Request.Method.POST, URL_SAVE_NAME,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-
+                        progressDialog.dismiss();
                         try {
                             JSONObject obj = new JSONObject(response);
                             if (!obj.getBoolean("error")) {
                                 //if there is a success
                                 //storing the name to sqlite with status synced
-                                progressDialog.dismiss();
-
-
                                 saveNameToLocalStorage(name, NAME_SYNCED_WITH_SERVER);
+
                             } else {
                                 //if there is some error
                                 //saving the name to sqlite with status unsynced
-
                                 saveNameToLocalStorage(name, NAME_NOT_SYNCED_WITH_SERVER);
                             }
                         } catch (JSONException e) {
@@ -173,7 +165,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         progressDialog.dismiss();
-                        Log.e("Error",error.getMessage());
                         //on error storing the name to sqlite with status unsynced
                         saveNameToLocalStorage(name, NAME_NOT_SYNCED_WITH_SERVER);
                     }
@@ -196,10 +187,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Name n = new Name(name, status);
         names.add(n);
         refreshList();
+
     }
 
     @Override
     public void onClick(View view) {
         saveNameToServer();
+        db.deleteAll("name");
     }
 }
