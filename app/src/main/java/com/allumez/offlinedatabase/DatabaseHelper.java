@@ -62,6 +62,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
         return true;
     }
+    public void deleteAll(String name,int status){
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        db.execSQL("DELETE FROM "+TABLE_NAME);
+
+        db.close();
+
+    }
 
     /*
      * This method taking two arguments
@@ -98,15 +107,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Cursor c = db.rawQuery(sql, null);
         return c;
     }
-    public void deleteAll(String name){
 
-        SQLiteDatabase db = this.getWritableDatabase();
-
-        db.execSQL("DELETE FROM "+TABLE_NAME);
-
-        db.close();
-
-    }
 
 
 }

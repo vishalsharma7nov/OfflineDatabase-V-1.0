@@ -151,12 +151,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 //storing the name to sqlite with status synced
                                 saveNameToLocalStorage(name, NAME_SYNCED_WITH_SERVER);
 
-                            } else {
+                            }
+                            else
+                            {
                                 //if there is some error
                                 //saving the name to sqlite with status unsynced
                                 saveNameToLocalStorage(name, NAME_NOT_SYNCED_WITH_SERVER);
                             }
-                        } catch (JSONException e) {
+                        }
+                        catch (JSONException e)
+                        {
                             e.printStackTrace();
                         }
                     }
@@ -187,12 +191,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Name n = new Name(name, status);
         names.add(n);
         refreshList();
-
     }
 
     @Override
     public void onClick(View view) {
         saveNameToServer();
-        db.deleteAll("name");
     }
 }

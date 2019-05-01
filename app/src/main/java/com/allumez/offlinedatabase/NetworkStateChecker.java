@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.util.Log;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -67,6 +68,7 @@ public class NetworkStateChecker extends BroadcastReceiver {
      * we will update the status as synced in SQLite
      * */
     private void saveName(final int id, final String name) {
+        Log.isLoggable("id",id);
         StringRequest stringRequest = new StringRequest(Request.Method.POST, MainActivity.URL_SAVE_NAME,
                 new Response.Listener<String>() {
                     @Override
@@ -95,6 +97,7 @@ public class NetworkStateChecker extends BroadcastReceiver {
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String, String> params = new HashMap<>();
                 params.put("name", name);
+                params.put("id", String.valueOf(id));
                 return params;
             }
         };
