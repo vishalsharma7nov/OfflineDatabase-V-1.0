@@ -1,30 +1,25 @@
 package com.allumez.offlinedatabase;
 
-import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,14 +36,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * make sure you are using the ip instead of localhost
      * it will not work if you are using localhost
      * */
-    public static final String URL_SAVE_NAME = "http://api.hostingfunda.com/tracking/offlinedatabase.php";
+    public static final String URL_SAVE_NAME = "http://api.hostingfunda.com/Offline-DB/offlinedb-2.0.php";
 
     //database helper object
     private DatabaseHelper db;
 
     //View objects
-    private Button buttonSave;
-    private EditText editTextName;
+    private Button buttonSave,buttonDelete,buttonRefresh;
+    private EditText editTextName,editTextId,editTextPhone;
     private ListView listViewNames;
 
     //List to store all the names
@@ -77,12 +72,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         names = new ArrayList<>();
 
         buttonSave = (Button) findViewById(R.id.buttonSave);
+        buttonDelete= (Button) findViewById(R.id.buttonDelete);
+        buttonRefresh= (Button) findViewById(R.id.buttonRefresh);
+
         editTextName = (EditText) findViewById(R.id.editTextName);
+        editTextPhone = (EditText) findViewById(R.id.editTextPhone);
+        editTextId = (EditText) findViewById(R.id.editTextId);
+
         listViewNames = (ListView) findViewById(R.id.listViewNames);
 
         //adding click listener to button
         buttonSave.setOnClickListener(this);
-
+        buttonRefresh.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                recreate();
+            }
+        });
+        buttonDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deleteNames();
+            }
+        });
         //calling the method to load all the stored names
         loadNames();
 
@@ -93,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 //loading the names again
                 loadNames();
+                deleteNames();
             }
         };
 
@@ -105,21 +118,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * load the names from the database
      * with updated sync status
      * */
-    private void loadNames() {
+    private void loadNames()
+    {
         names.clear();
+        db.deleteTabledata();
         Cursor cursor = db.getNames();
+        if (cursor.moveToFirst())
+        {
+            do
+                {
+                Name name = new Name(
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_ID)),
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_NAME)),
+                        cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLUMN_STATUS))
+                );
+                names.add(name);
+                }
+            while (cursor.moveToNext());
+        }
+
+        nameAdapter = new NameAdpater(this, R.layout.names, names);
+        listViewNames.setAdapter(nameAdapter);
+    }
+    public int deleteNames()
+    {
+//        names.clear();
+        Cursor cursor = db.deleteTabledata();
         if (cursor.moveToFirst()) {
             do {
                 Name name = new Name(
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_ID)),
                         cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_NAME)),
                         cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLUMN_STATUS))
                 );
                 names.add(name);
             } while (cursor.moveToNext());
         }
-
         nameAdapter = new NameAdpater(this, R.layout.names, names);
         listViewNames.setAdapter(nameAdapter);
+
+        return 0;
     }
 
     /*
@@ -136,27 +174,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         final ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Saving Name...");
         progressDialog.show();
-
+        final String mId="0";
         final String name = editTextName.getText().toString().trim();
-
+        final String phone = editTextPhone.getText().toString().trim();
         StringRequest stringRequest = new StringRequest(Request.Method.POST, URL_SAVE_NAME,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         progressDialog.dismiss();
+                        Log.e("Response",response);
                         try {
                             JSONObject obj = new JSONObject(response);
                             if (!obj.getBoolean("error")) {
                                 //if there is a success
                                 //storing the name to sqlite with status synced
-                                saveNameToLocalStorage(name, NAME_SYNCED_WITH_SERVER);
+                                saveNameToLocalStorage(mId,name,phone, NAME_SYNCED_WITH_SERVER);
 
                             }
                             else
                             {
                                 //if there is some error
                                 //saving the name to sqlite with status unsynced
-                                saveNameToLocalStorage(name, NAME_NOT_SYNCED_WITH_SERVER);
+                                saveNameToLocalStorage(mId,name,phone, NAME_NOT_SYNCED_WITH_SERVER);
                             }
                         }
                         catch (JSONException e)
@@ -170,13 +209,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     public void onErrorResponse(VolleyError error) {
                         progressDialog.dismiss();
                         //on error storing the name to sqlite with status unsynced
-                        saveNameToLocalStorage(name, NAME_NOT_SYNCED_WITH_SERVER);
+                        saveNameToLocalStorage(mId,name, phone,NAME_NOT_SYNCED_WITH_SERVER);
                     }
                 }) {
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String, String> params = new HashMap<>();
                 params.put("name", name);
+                params.put("id", String.valueOf(mId));
+
+                Log.e("123", String.valueOf(mId)+" "+name);
                 return params;
             }
         };
@@ -185,10 +227,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     //saving the name to local storage
-    private void saveNameToLocalStorage(String name, int status) {
+    private void saveNameToLocalStorage(String mId, String name, String phone, int status) {
         editTextName.setText("");
-        db.addName(name, status);
-        Name n = new Name(name, status);
+
+        db.addName(mId,name, status);
+        Name n = new Name(mId,name, status);
         names.add(n);
         refreshList();
     }

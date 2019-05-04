@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -37,15 +38,16 @@ public class NetworkStateChecker extends BroadcastReceiver {
         this.context = context;
 
         db = new DatabaseHelper(context);
-
+//       int a = new MainActivity().deleteNames();
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
 
         //if there is a network
-        if (activeNetwork != null) {
+        if (activeNetwork != null)
+        {
             //if connected to wifi or mobile data plan
-            if (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI || activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
-
+            if (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI || activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE)
+            {
                 //getting all the unsynced names
                 Cursor cursor = db.getUnsyncedNames();
                 if (cursor.moveToFirst()) {
@@ -57,52 +59,69 @@ public class NetworkStateChecker extends BroadcastReceiver {
                         );
                     } while (cursor.moveToNext());
                 }
+
             }
+
         }
     }
-
     /*
      * method taking two arguments
      * name that is to be saved and id of the name from SQLite
      * if the name is successfully sent
      * we will update the status as synced in SQLite
      * */
-    private void saveName(final int id, final String name) {
-        Log.isLoggable("id",id);
+    private void saveName(final int id, final String name)
+    {
+
         StringRequest stringRequest = new StringRequest(Request.Method.POST, MainActivity.URL_SAVE_NAME,
-                new Response.Listener<String>() {
+                new Response.Listener<String>()
+                {
                     @Override
-                    public void onResponse(String response) {
-                        try {
+                    public void onResponse(String response)
+                    {
+                        Toast.makeText(context, response, Toast.LENGTH_SHORT).show();
+                        Log.e("Response",response);
+                        try
+                        {
                             JSONObject obj = new JSONObject(response);
-                            if (!obj.getBoolean("error")) {
+                            if (!obj.getBoolean("error"))
+                            {
                                 //updating the status in sqlite
                                 db.updateNameStatus(id, MainActivity.NAME_SYNCED_WITH_SERVER);
-
                                 //sending the broadcast to refresh the list
                                 context.sendBroadcast(new Intent(MainActivity.DATA_SAVED_BROADCAST));
                             }
-                        } catch (JSONException e) {
+                        }
+                        catch (JSONException e)
+                        {
                             e.printStackTrace();
                         }
                     }
                 },
-                new Response.ErrorListener() {
+                new Response.ErrorListener()
+                {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
+                    public void onErrorResponse(VolleyError error)
+                    {
 
                     }
-                }) {
+                })
+        {
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
+            protected Map<String, String> getParams() throws AuthFailureError
+            {
                 Map<String, String> params = new HashMap<>();
                 params.put("name", name);
                 params.put("id", String.valueOf(id));
+                params.put("id", String.valueOf(id));
+                Log.e("1234", String.valueOf(id)+" "+name);
                 return params;
             }
         };
 
         VolleySingleton.getInstance(context).addToRequestQueue(stringRequest);
     }
+
+
 
 }

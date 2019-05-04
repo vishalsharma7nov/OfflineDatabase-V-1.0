@@ -49,11 +49,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * second one is the status
      * 0 means the name is synced with the server
      * 1 means the name is not synced with the server
-     * */
-    public boolean addName(String name, int status) {
+     * */int id;
+    public boolean addName(String mId,String name, int status) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 
+        String id1 = mId;
+            mId = String.valueOf(id);
         contentValues.put(COLUMN_NAME, name);
         contentValues.put(COLUMN_STATUS, status);
 
@@ -105,6 +107,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         String sql = "SELECT * FROM " + TABLE_NAME + " WHERE " + COLUMN_STATUS + " = 0;";
         Cursor c = db.rawQuery(sql, null);
+        return c;
+    }
+
+    public Cursor deleteTabledata()
+    {
+        SQLiteDatabase db =this.getReadableDatabase();
+        String sql = "DELETE FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = id;";
+        Cursor c = db.rawQuery(sql,null);
         return c;
     }
 

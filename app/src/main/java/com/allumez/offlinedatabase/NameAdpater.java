@@ -36,6 +36,7 @@ public class NameAdpater extends ArrayAdapter<Name> {
         //getting listview itmes
         View listViewItem = inflater.inflate(R.layout.names, null, true);
         TextView textViewName = (TextView) listViewItem.findViewById(R.id.textViewName);
+        TextView textViewId = (TextView) listViewItem.findViewById(R.id.textViewId);
         ImageView imageViewStatus = (ImageView) listViewItem.findViewById(R.id.imageViewStatus);
 
         //getting the current name
@@ -43,6 +44,7 @@ public class NameAdpater extends ArrayAdapter<Name> {
 
         //setting the name to textview
         textViewName.setText(name.getName());
+        textViewId.setText(name.getId());
 
         //if the synced status is 0 displaying
         //queued icon
