@@ -1,18 +1,29 @@
 package com.allumez.offlinedatabase;
 
+import android.util.Log;
+
 public class Name {
     private String name;
     private int status;
     private String id;
+    private String phone;
 
-    public Name(String id,String name, int status) {
+    public String getPhone() {
+        return phone;
+    }
+
+    public Name(String id, String name, String phone, int status) {
         this.id = id;
         this.name = name;
+        this.phone = phone;
         this.status = status;
     }
 
+
     public String getId() {
+//        Log.e("1==",id);
         return id;
+
     }
 
     public String getName() {

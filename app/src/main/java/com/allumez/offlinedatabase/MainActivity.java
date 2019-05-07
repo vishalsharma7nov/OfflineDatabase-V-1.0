@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * make sure you are using the ip instead of localhost
      * it will not work if you are using localhost
      * */
-    public static final String URL_SAVE_NAME = "http://api.hostingfunda.com/Offline-DB/offlinedb-2.0.php";
+    public static final String URL_SAVE_NAME = "http://api.hostingfunda.com/Offline-DB/offlinedb-3.0.php";
 
     //database helper object
     private DatabaseHelper db;
@@ -61,6 +61,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     //adapterobject for list view
     private NameAdpater nameAdapter;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 //loading the names again
                 loadNames();
-                deleteNames();
+//                deleteNames();
             }
         };
 
@@ -121,7 +123,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void loadNames()
     {
         names.clear();
-        db.deleteTabledata();
         Cursor cursor = db.getNames();
         if (cursor.moveToFirst())
         {
@@ -130,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Name name = new Name(
                         cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_ID)),
                         cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_NAME)),
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_PHONE)),
                         cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLUMN_STATUS))
                 );
                 names.add(name);
@@ -142,13 +144,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
     public int deleteNames()
     {
-//        names.clear();
         Cursor cursor = db.deleteTabledata();
         if (cursor.moveToFirst()) {
             do {
                 Name name = new Name(
                         cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_ID)),
                         cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_NAME)),
+                        cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_PHONE)),
                         cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLUMN_STATUS))
                 );
                 names.add(name);
@@ -170,11 +172,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     /*
      * this method is saving the name to ther server
      * */
+
     private void saveNameToServer() {
         final ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Saving Name...");
         progressDialog.show();
-        final String mId="0";
+
+        final String online = "1";
+        final String mId = "0";
+
+
         final String name = editTextName.getText().toString().trim();
         final String phone = editTextPhone.getText().toString().trim();
         StringRequest stringRequest = new StringRequest(Request.Method.POST, URL_SAVE_NAME,
@@ -189,7 +196,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 //if there is a success
                                 //storing the name to sqlite with status synced
                                 saveNameToLocalStorage(mId,name,phone, NAME_SYNCED_WITH_SERVER);
-
+                                loadNames();
                             }
                             else
                             {
@@ -216,9 +223,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String, String> params = new HashMap<>();
                 params.put("name", name);
+                params.put("online", online);
                 params.put("id", String.valueOf(mId));
+                params.put("phone", phone);
 
-                Log.e("123", String.valueOf(mId)+" "+name);
+                Log.e("123", mId+" "+name+" "+phone);
                 return params;
             }
         };
@@ -227,11 +236,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     //saving the name to local storage
-    private void saveNameToLocalStorage(String mId, String name, String phone, int status) {
+    private void saveNameToLocalStorage(String id,String name, String phone, int status) {
         editTextName.setText("");
+        editTextPhone.setText("");
 
-        db.addName(mId,name, status);
-        Name n = new Name(mId,name, status);
+        db.addName(name,phone,status);
+        Name n = new Name(id,name,phone, status);
+
         names.add(n);
         refreshList();
     }

@@ -2,9 +2,11 @@ package com.allumez.offlinedatabase;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 
 public class DatabaseHelper extends SQLiteOpenHelper {
@@ -14,10 +16,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String TABLE_NAME = "names";
     public static final String COLUMN_ID = "id";
     public static final String COLUMN_NAME = "name";
+    public static final String COLUMN_PHONE = "phone";
     public static final String COLUMN_STATUS = "status";
 
     //database version
     private static final int DB_VERSION = 1;
+    private Context context;
 
     //Constructor
     public DatabaseHelper(Context context) {
@@ -28,10 +32,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String sql = "CREATE TABLE " + TABLE_NAME
-                + "(" + COLUMN_ID +
-                " INTEGER PRIMARY KEY AUTOINCREMENT, " + COLUMN_NAME +
-                " VARCHAR, " + COLUMN_STATUS +
-                " TINYINT);";
+                + "("
+                + COLUMN_ID +" INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + COLUMN_NAME +" VARCHAR, "
+                + COLUMN_PHONE + " TINYINT, "
+                + COLUMN_STATUS +" TINYINT);";
         db.execSQL(sql);
     }
 
@@ -49,29 +54,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * second one is the status
      * 0 means the name is synced with the server
      * 1 means the name is not synced with the server
-     * */int id;
-    public boolean addName(String mId,String name, int status) {
+     * */
+
+
+    public boolean addName(String name,String phone, int status) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
 
-        String id1 = mId;
-            mId = String.valueOf(id);
         contentValues.put(COLUMN_NAME, name);
+        contentValues.put(COLUMN_PHONE, phone);
         contentValues.put(COLUMN_STATUS, status);
 
-
+        String sql = "DELETE FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = id;";
+        Cursor c = db.rawQuery(sql,null);
         db.insert(TABLE_NAME, null, contentValues);
         db.close();
         return true;
-    }
-    public void deleteAll(String name,int status){
-
-        SQLiteDatabase db = this.getWritableDatabase();
-
-        db.execSQL("DELETE FROM "+TABLE_NAME);
-
-        db.close();
-
     }
 
     /*
@@ -86,6 +84,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contentValues.put(COLUMN_STATUS, status);
         db.update(TABLE_NAME, contentValues, COLUMN_ID + "=" + id, null);
         db.close();
+        Log.e("COLUMN ID", String.valueOf(id));
         return true;
     }
 
@@ -117,7 +116,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Cursor c = db.rawQuery(sql,null);
         return c;
     }
+    public Cursor getId() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+//        String sql = "SELECT * FROM" name ORDER BY + " COLUMN_ID " DESC LIMIT 1;"
 
+
+        String sql = "SELECT * FROM " + TABLE_NAME + " ORDER BY " + COLUMN_ID + " ASC;";
+        Cursor c = db.rawQuery(sql,null);
+
+        return c;
+    }
 
 
 }

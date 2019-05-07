@@ -1,6 +1,7 @@
 package com.allumez.offlinedatabase;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,7 +20,6 @@ public class NameAdpater extends ArrayAdapter<Name> {
 
     //context object
     private Context context;
-
     //constructor
     public NameAdpater(Context context, int resource, List<Name> names) {
         super(context, resource, names);
@@ -37,7 +37,7 @@ public class NameAdpater extends ArrayAdapter<Name> {
         View listViewItem = inflater.inflate(R.layout.names, null, true);
         TextView textViewName = (TextView) listViewItem.findViewById(R.id.textViewName);
         TextView textViewId = (TextView) listViewItem.findViewById(R.id.textViewId);
-        ImageView imageViewStatus = (ImageView) listViewItem.findViewById(R.id.imageViewStatus);
+        TextView textViewPhone = (TextView) listViewItem.findViewById(R.id.textViewPhone);
 
         //getting the current name
         Name name = names.get(position);
@@ -45,15 +45,10 @@ public class NameAdpater extends ArrayAdapter<Name> {
         //setting the name to textview
         textViewName.setText(name.getName());
         textViewId.setText(name.getId());
-
-        //if the synced status is 0 displaying
-        //queued icon
-        //else displaying synced icon
-//        if (name.getStatus() == 0)
-//            imageViewStatus.setBackgroundResource(R.drawable.stopwatch);
-//        else
-//            imageViewStatus.setBackgroundResource(R.drawable.success);
+        textViewPhone.setText(name.getPhone());
 
         return listViewItem;
     }
+
+
 }

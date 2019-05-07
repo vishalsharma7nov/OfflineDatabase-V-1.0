@@ -21,9 +21,7 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by Belal on 1/27/2017.
- */
+
 
 public class NetworkStateChecker extends BroadcastReceiver {
 
@@ -55,7 +53,8 @@ public class NetworkStateChecker extends BroadcastReceiver {
                         //calling the method to save the unsynced name to MySQL
                         saveName(
                                 cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLUMN_ID)),
-                                cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_NAME))
+                                cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_NAME)),
+                                cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_PHONE))
                         );
                     } while (cursor.moveToNext());
                 }
@@ -70,9 +69,9 @@ public class NetworkStateChecker extends BroadcastReceiver {
      * if the name is successfully sent
      * we will update the status as synced in SQLite
      * */
-    private void saveName(final int id, final String name)
+    private void saveName(final int id, final String name,final String phone)
     {
-
+        final String offline = "0";
         StringRequest stringRequest = new StringRequest(Request.Method.POST, MainActivity.URL_SAVE_NAME,
                 new Response.Listener<String>()
                 {
@@ -112,9 +111,10 @@ public class NetworkStateChecker extends BroadcastReceiver {
             {
                 Map<String, String> params = new HashMap<>();
                 params.put("name", name);
+                params.put("online", offline);
                 params.put("id", String.valueOf(id));
-                params.put("id", String.valueOf(id));
-                Log.e("1234", String.valueOf(id)+" "+name);
+                params.put("phone", phone);
+                Log.e("1234", String.valueOf(id)+" "+name+" "+ phone);
                 return params;
             }
         };
