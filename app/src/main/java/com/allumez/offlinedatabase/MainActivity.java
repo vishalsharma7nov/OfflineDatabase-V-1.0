@@ -178,8 +178,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         progressDialog.setMessage("Saving Name...");
         progressDialog.show();
 
+        Cursor c = db.getUnsyncedNames();
+
         final String online = "1";
-        final String mId = "0";
+        final String mId = String.valueOf(c.getCount()+1);
 
 
         final String name = editTextName.getText().toString().trim();
@@ -224,7 +226,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Map<String, String> params = new HashMap<>();
                 params.put("name", name);
                 params.put("online", online);
-                params.put("id", String.valueOf(mId));
+                params.put("id", mId);
                 params.put("phone", phone);
 
                 Log.e("123", mId+" "+name+" "+phone);
