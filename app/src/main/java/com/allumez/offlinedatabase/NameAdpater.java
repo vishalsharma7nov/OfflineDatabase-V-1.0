@@ -6,7 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.List;
@@ -26,13 +25,13 @@ public class NameAdpater extends ArrayAdapter<Name> {
         this.context = context;
         this.names = names;
     }
-
+    int a;
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
         //getting the layoutinflater
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
+        a = position;
         //getting listview itmes
         View listViewItem = inflater.inflate(R.layout.names, null, true);
         TextView textViewName = (TextView) listViewItem.findViewById(R.id.textViewName);
@@ -47,8 +46,16 @@ public class NameAdpater extends ArrayAdapter<Name> {
         textViewId.setText(name.getId());
         textViewPhone.setText(name.getPhone());
 
+//        Log.e("TextView",name.getId());
+
         return listViewItem;
     }
 
+    public int getId()
+    {
+        Name name = names.get(a);
+        int b = Integer.parseInt(name.getId());
+        return b;
+    }
 
 }

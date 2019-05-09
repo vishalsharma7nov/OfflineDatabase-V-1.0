@@ -21,9 +21,7 @@ public class Name {
 
 
     public String getId() {
-//        Log.e("1==",id);
         return id;
-
     }
 
     public String getName() {

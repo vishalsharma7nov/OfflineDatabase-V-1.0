@@ -86,7 +86,7 @@ public class NetworkStateChecker extends BroadcastReceiver {
                             if (!obj.getBoolean("error"))
                             {
                                 //updating the status in sqlite
-                                db.updateNameStatus(id, MainActivity.NAME_SYNCED_WITH_SERVER);
+                                db.updateNameStatus(id, MainActivity.NAME_NOT_SYNCED_WITH_SERVER);
                                 //sending the broadcast to refresh the list
                                 context.sendBroadcast(new Intent(MainActivity.DATA_SAVED_BROADCAST));
                             }

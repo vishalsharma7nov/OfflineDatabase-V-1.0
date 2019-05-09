@@ -65,9 +65,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contentValues.put(COLUMN_PHONE, phone);
         contentValues.put(COLUMN_STATUS, status);
 
-        String sql = "DELETE FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = id;";
+        String sql = "SELECT * FROM " + TABLE_NAME + " ORDER BY " + COLUMN_ID + " ASC;";
         Cursor c = db.rawQuery(sql,null);
+        c.moveToFirst();
         db.insert(TABLE_NAME, null, contentValues);
+        c.close();
         db.close();
         return true;
     }
@@ -101,7 +103,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     /*
      * this method is for getting all the unsynced name
      * so that we can sync it with database
-     * */
+     *
+     */
     public Cursor getUnsyncedNames() {
         SQLiteDatabase db = this.getReadableDatabase();
         String sql = "SELECT * FROM " + TABLE_NAME + " WHERE " + COLUMN_STATUS + " = 0;";
@@ -114,19 +117,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db =this.getReadableDatabase();
         String sql = "DELETE FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = id;";
         Cursor c = db.rawQuery(sql,null);
+
         return c;
     }
     public Cursor getId() {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-//        String sql = "SELECT * FROM" name ORDER BY + " COLUMN_ID " DESC LIMIT 1;"
-
-
+        SQLiteDatabase db = this.getReadableDatabase();
         String sql = "SELECT * FROM " + TABLE_NAME + " ORDER BY " + COLUMN_ID + " ASC;";
-        Cursor c = db.rawQuery(sql,null);
+        Cursor c = db.rawQuery(sql, null);
 
         return c;
     }
-
-
 }

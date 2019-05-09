@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -88,13 +89,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         buttonRefresh.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 recreate();
             }
         });
         buttonDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                deleteNames();
+                deleteByCheckingTheServer();
             }
         });
         //calling the method to load all the stored names
@@ -104,22 +106,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-
                 //loading the names again
                 loadNames();
-//                deleteNames();
             }
         };
 
         //registering the broadcast receiver to update sync status
         registerReceiver(broadcastReceiver, new IntentFilter(DATA_SAVED_BROADCAST));
     }
-
     /*
+     *
      * this method will
      * load the names from the database
      * with updated sync status
-     * */
+     *
+     */
     private void loadNames()
     {
         names.clear();
@@ -127,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (cursor.moveToFirst())
         {
             do
-                {
+            {
                 Name name = new Name(
                         cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_ID)),
                         cursor.getString(cursor.getColumnIndex(DatabaseHelper.COLUMN_NAME)),
@@ -135,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLUMN_STATUS))
                 );
                 names.add(name);
-                }
+            }
             while (cursor.moveToNext());
         }
 
@@ -145,6 +146,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public int deleteNames()
     {
         Cursor cursor = db.deleteTabledata();
+//        int v = cursor.getCount();
+//        Log.e("v", String.valueOf(v));
+
         if (cursor.moveToFirst()) {
             do {
                 Name name = new Name(
@@ -164,25 +168,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     /*
      * this method will simply refresh the list
-     * */
+     */
     private void refreshList() {
         nameAdapter.notifyDataSetChanged();
     }
 
     /*
      * this method is saving the name to ther server
-     * */
+     */
+
 
     private void saveNameToServer() {
         final ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Saving Name...");
         progressDialog.show();
+        Cursor c = db.getId();
 
-        Cursor c = db.getUnsyncedNames();
+//        int id = nameAdapter.getId();
 
         final String online = "1";
         final String mId = String.valueOf(c.getCount()+1);
-
+        Log.e("mId",mId);
 
         final String name = editTextName.getText().toString().trim();
         final String phone = editTextPhone.getText().toString().trim();
@@ -197,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             if (!obj.getBoolean("error")) {
                                 //if there is a success
                                 //storing the name to sqlite with status synced
-                                saveNameToLocalStorage(mId,name,phone, NAME_SYNCED_WITH_SERVER);
+                                saveNameToLocalStorage(mId,name,phone, NAME_NOT_SYNCED_WITH_SERVER);
                                 loadNames();
                             }
                             else
@@ -224,10 +230,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String, String> params = new HashMap<>();
-                params.put("name", name);
+//                params.put("name", name);
                 params.put("online", online);
-                params.put("id", mId);
-                params.put("phone", phone);
+//                params.put("id", mId);
+//                params.put("phone", phone);
 
                 Log.e("123", mId+" "+name+" "+phone);
                 return params;
@@ -252,5 +258,74 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         saveNameToServer();
+    }
+    private void deleteByCheckingTheServer() {
+        final ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Delete Name...");
+        progressDialog.show();
+
+        int a = nameAdapter.getId();
+
+        final String mId = String.valueOf(a);
+
+
+        final String name = editTextName.getText().toString().trim();
+        final String phone = editTextPhone.getText().toString().trim();
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, "http://api.hostingfunda.com/Offline-DB/checktodelete.php",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        progressDialog.dismiss();
+                        Toast.makeText(MainActivity.this, response, Toast.LENGTH_SHORT).show();
+                        Log.e("Response",response);
+                        try {
+                            JSONObject obj = new JSONObject(response);
+                            if (!obj.getBoolean("record")) {
+                                //if there is a success
+                                //storing the name to sqlite with status synced
+                                deleteNameFromLocalStorage(mId,name,phone, NAME_NOT_SYNCED_WITH_SERVER);
+                                deleteNames();
+                                refreshList();
+
+                            }
+                            else
+                            {
+                                //if there is some error
+                                //saving the name to sqlite with status unsynced
+                                deleteNameFromLocalStorage(mId,name,phone, NAME_NOT_SYNCED_WITH_SERVER);
+                            }
+                        }
+                        catch (JSONException e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        progressDialog.dismiss();
+                        //on error storing the name to sqlite with status unsynced
+                        deleteNameFromLocalStorage(mId,name, phone,NAME_NOT_SYNCED_WITH_SERVER);
+                    }
+                }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+                params.put("id", mId);
+                Log.e("Delete ID",mId);
+                return params;
+            }
+        };
+
+        VolleySingleton.getInstance(this).addToRequestQueue(stringRequest);
+    }
+    private void deleteNameFromLocalStorage(String id,String name, String phone, int status) {
+
+        db.deleteTabledata();
+        Name n = new Name(id,name,phone, status);
+
+        names.remove(n);
+        refreshList();
     }
 }
